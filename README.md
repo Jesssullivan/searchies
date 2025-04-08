@@ -10,6 +10,14 @@
 - tailscale serve used for intra-node proxy action
 - httpd vhost used for tor
 
+
+### What it doesn't have:
+- No docker, no moocows
+- no moomoo barn or dedicated ingress solution
+- anon graphana
+- needs cd pipeline for banging!  uppies!  uppies!  
+
+
 **On darwin controllers, you'll need dees:**
 ```shell
 # on mac:
@@ -37,8 +45,3 @@ sudo chmod +x scripts/setup_venv.sh
 ```shell
 ansible-playbook -i inventory_dev -K deploy-searchies.yml
 ```
-
-### What it doesn't have:
-- No docker, no moocows
-- no moomoo barn or dedicated ingress solution
-- anon graphana
