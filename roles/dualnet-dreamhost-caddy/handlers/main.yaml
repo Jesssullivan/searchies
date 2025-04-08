@@ -1,0 +1,6 @@
+---
+- name: Restart caddy
+  service:
+    name: caddy
+    state: started
+  become: yes

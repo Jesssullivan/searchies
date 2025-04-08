@@ -1,0 +1,35 @@
+{
+	log {
+		level DEBUG
+		output file /var/log/caddy/access.log {
+			roll_size 2mb
+			roll_keep 4
+			roll_keep_for 2h
+		}
+	}
+}
+
+## {{ ansible_managed }}
+{% if caddy_tls_providers is defined %}
+{% for item in caddy_tls_providers %}
+({{ item.provider }}) {
+	tls {
+		{{ item.challenge_type }} {{ item.provider }} {{ item.provider_api_token }}
+	}
+}
+{% endfor %}
+{% endif %}
+
+{% if caddy_endpoints is defined %}
+{% for endpoint in caddy_endpoints %}
+# {{ endpoint.friendly_name }}
+{{ endpoint.fqdn }} {
+	reverse_proxy {{ endpoint.upstream }} {
+		header_up Host {{ endpoint.upstream }}
+		header_up X-Forwarded-Host {http.request.host}
+		header_up X-Forwarded-Proto {http.request.scheme}
+	}
+	import {{ endpoint.tls_provider }}
+}
+{% endfor %}
+{% endif %}

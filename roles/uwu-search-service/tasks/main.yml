@@ -1,0 +1,13 @@
+---
+- name: install depends
+  include_tasks:
+    file: depends.yml
+- name: setup httpd and tor
+  include_tasks:
+    file: httpd-tor.yml
+- name: setup searxng
+  include_tasks:
+    file: searx.yml
+- name: setup ts serve
+  include_tasks:
+    file: tsserve.yml

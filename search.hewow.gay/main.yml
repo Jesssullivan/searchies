@@ -1,0 +1,40 @@
+
+all:
+  vars:  
+    site_tailscale_auth_key: 
+    site_do_token: 
+    dreamhost_api_token: 
+    
+    # proxy action:
+    site_name: 
+    site_domain: 
+    
+    # droplet configs:
+    proxy_droplet_uname: 
+    proxy_droplet_server_name: 
+    proxy_droplet_droplet_os: "rockylinux-9-x64"
+
+    service_droplet_uname: 
+    service_droplet_server_name: 
+    service_droplet_droplet_os: "rockylinux-9-x64"
+    
+    expose_service_ts_port_number:
+      - 8888
+      - 443
+      - 80
+    
+    expose_service_ts_port_protocol: tcp
+        
+    caddy_tls_providers:
+      - provider: dreamhost
+        challenge_type: dns
+        provider_api_token: "{{ dreamhost_api_token }}"
+        resolver_ip: 1.1.1.1
+    
+    caddy_endpoints:
+      - friendly_name: "{{ site_name }}"
+        fqdn: "{{ site_name }}.{{ site_domain }}"
+        upstream: "{{ service_droplet_server_name }}:8888"
+        tls_insecure: false
+        tls_provider: dreamhost
+  

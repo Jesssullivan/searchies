@@ -1,0 +1,129 @@
+---
+- name: Check if tailscale-serve exists
+  ansible.builtin.shell: |
+    systemctl status tailscale-serve.service
+  register: tailscale_serve_service_check
+  failed_when: false
+
+- name: Stop tailscale-serve if service exists
+  ansible.builtin.systemd:
+    name: tailscale-serve
+    state: stopped
+  become: yes
+  when: tailscale_serve_service_check.rc == 0
+    
+- name: Check if tailscale-serve-checker exists
+  ansible.builtin.shell: |
+    systemctl status tailscale-serve-checker.service
+  register: tailscale_serve_checker_service_check
+  failed_when: false
+
+- name: Stop tailscale-serve-checker if service exists
+  ansible.builtin.systemd:
+    name: tailscale-serve-checker
+    state: stopped
+  become: yes
+  when: tailscale_serve_checker_service_check.rc == 0
+- name: Enable and start SearXNG service
+  ansible.builtin.systemd:
+    name: searxng
+    enabled: yes
+    state: started
+  become: yes
+
+- name: ensure operator is set
+  ansible.builtin.command:
+    cmd: tailscale up --operator="{{ service_droplet_uname }}" --accept-routes --ssh
+    creates: /var/lib/tailscale/tailscaled.state
+  become: yes
+
+- name: Establish TS serve checker
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/tailscale-serve.service
+    content: |
+      [Unit]
+      Description=Tailscale Serve 127.0.0.1:8888
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/bin/tailscale serve --bg --http=8888 8888
+      Restart=always
+      RestartSec=5
+      User=jsullivan2
+
+      [Install]
+      WantedBy=multi-user.target
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+- name: Enable and start TS serve checker
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/tailscale-serve-checker.service
+    content: |
+      [Unit]
+      Description=Periodic Checker for Tailscale Serve
+      After=network.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/bin/bash -c "systemctl is-active --quiet tailscale-serve.service || systemctl restart tailscale-serve.service"
+      User=root
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+- name: Enable and start TS serve timer
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/tailscale-serve-checker.timer
+    content: |
+      [Unit]
+      Description=Run Tailscale Serve Checker Periodically
+
+      [Timer]
+      OnBootSec=1min
+      OnUnitActiveSec=1min
+
+      [Install]
+      WantedBy=timers.target
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+- name: reload daemons
+  ansible.builtin.command:
+    cmd: systemctl daemon-reload
+  become: yes
+
+- name: enable serve service
+  ansible.builtin.systemd:
+    name: tailscale-serve.service
+    enabled: yes
+    state: started
+  become: yes
+
+- name: enable serve checker
+  ansible.builtin.systemd:
+    name: tailscale-serve-checker.timer
+    enabled: yes
+    state: started
+  become: yes
+
+- name: boot timer
+  ansible.builtin.systemd:
+    name: tailscale-serve-checker.timer
+    enabled: yes
+    state: started
+  become: yes
+    
+- name: re-permiss redis sock
+  file:
+    path: /var/run/redis
+    owner: searxng
+    recurse: yes
+  become: yes
+  notify:
+    - restart redis

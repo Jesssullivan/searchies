@@ -1,0 +1,58 @@
+---
+- name: dnf epel-release 
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+  become: yes
+    
+- name: install searxng depends
+  ansible.builtin.dnf:
+    name:
+      - python3
+      - python3-pip
+      - python3-lxml
+      - python3-babel
+      - python3-devel
+      - uwsgi
+      - uwsgi-plugin-python3
+      - git
+      - redis
+      - firewalld
+      - httpd
+      - tor
+    state: present
+  become: yes
+
+- name: Ensure Redis is enabled and started
+  systemd:
+    name: redis
+    state: started
+    enabled: true
+  become: yes
+
+- name: Ensure daemons are reloaded
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  become: yes
+    
+- name: update redis stuff
+  lineinfile:
+    path: /etc/redis/redis.conf
+    line: "{{ item }}"
+    state: present
+  with_items:
+    - "unixsocket /var/run/redis/redis.sock"
+    - "unixsocketperm 777"
+  become: yes
+    
+- name: Ensure Redis is hard restarted
+  systemd:
+    name: redis
+    state: started
+    enabled: true
+  become: yes
+    
+- name: Run tailscale with specified options
+  ansible.builtin.command:
+    cmd: sudo tailscale up --operator="{{ service_droplet_uname }}" --accept-routes --ssh
+  become: yes

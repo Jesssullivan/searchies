@@ -1,0 +1,10 @@
+- hosts: localhost
+  roles:
+    - role: tofu-service-provisioning
+      delegate_to: localhost
+    - role: tofu-proxy-provisioning
+      delegate_to: localhost
+    - role: uwu-search-service
+      delegate_to: "{{ service_droplet_server_name }}"
+    - role: dualnet-dreamhost-caddy
+      delegate_to: "{{ proxy_droplet_server_name }}"  
