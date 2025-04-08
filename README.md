@@ -1,5 +1,5 @@
 # searchies
-*hard AF searxng deployments for uwu tinies*
+*hard AF searxng infra for uwu tinies*
 
 ### Bits probably not worth mentioning:
 - infra agnostic, this is tofu stuff and ansible FTW
@@ -9,6 +9,7 @@
 - firm, yet squishy firewall rules
 - tailscale serve used for intra-node proxy action
 - httpd vhost used for tor
+- clones from jesssullivan/searxng
 
 
 ### What it doesn't have:
